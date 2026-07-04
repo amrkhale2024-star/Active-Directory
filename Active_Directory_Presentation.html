@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Directory - Domain & Forest</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: #0a0e27;
+            color: #e0e6ed;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Particle Background */
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Navigation */
+        .nav-dots {
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .nav-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: rgba(100, 150, 255, 0.3);
+            border: 2px solid rgba(100, 150, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-dot.active {
+            background: #4a9eff;
+            border-color: #4a9eff;
+            box-shadow: 0 0 15px rgba(74, 158, 255, 0.6);
+            transform: scale(1.3);
+        }
+
+        .nav-dot:hover {
+            background: rgba(74, 158, 255, 0.5);
+        }
+
+        .nav-dot .tooltip {
+            position: absolute;
+            right: 28px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(10, 14, 39, 0.95);
+            border: 1px solid rgba(74, 158, 255, 0.3);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            color: #a8c5e8;
+        }
+
+        .nav-dot:hover .tooltip {
+            opacity: 1;
+        }
+
+        /* Slide Container */
+        .slides-container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .slide {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 80px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .slide.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .slide-content {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        /* Title Slide */
+        .title-slide {
+            text-align: center;
+        }
+
+        .title-slide .icon-wrapper {
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 40px;
+            background: linear-gradient(135deg, #1a237e 0%, #0d47a1 50%, #01579b 100%);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 20px 60px rgba(13, 71, 161, 0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .title-slide .icon-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.05) 50%, transparent 60%);
+            animation: shimmer 4s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        .title-slide .icon-wrapper svg {
+            width: 70px;
+            height: 70px;
+            fill: #64b5f6;
+            position: relative;
+            z-index: 1;
+        }
+
+        .title-slide h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #64b5f6 0%, #42a5f5 30%, #90caf9 70%, #bbdefb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.5rem;
+            color: #78909c;
+            font-weight: 500;
+        }
+
+        .title-slide .badge {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 10px 30px;
+            background: rgba(74, 158, 255, 0.1);
+            border: 1px solid rgba(74, 158, 255, 0.3);
+            border-radius: 50px;
+            font-size: 1rem;
+            color: #4a9eff;
+        }
+
+        /* Section Headers */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .section-number {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #1565c0, #0d47a1);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+            box-shadow: 0 8px 25px rgba(13, 71, 161, 0.3);
+            flex-shrink: 0;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #e3f2fd;
+        }
+
+        .section-header .tag {
+            padding: 6px 18px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-right: auto;
+        }
+
+        .tag.logical {
+            background: rgba(76, 175, 80, 0.15);
+            color: #81c784;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .tag.physical {
+            background: rgba(255, 152, 0, 0.15);
+            color: #ffb74d;
+            border: 1px solid rgba(255, 152, 0, 0.3);
+        }
+
+        /* Cards */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 30px;
+        }
+
+        .card {
+            background: linear-gradient(145deg, rgba(20, 25, 50, 0.9), rgba(15, 20, 40, 0.95));
+            border: 1px solid rgba(74, 158, 255, 0.15);
+            border-radius: 20px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #1565c0, #42a5f5, #90caf9);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(74, 158, 255, 0.4);
+            box-shadow: 0 20px 50px rgba(13, 71, 161, 0.2);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(74, 158, 255, 0.1);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 18px;
+        }
+
+        .card-icon svg {
+            width: 26px;
+            height: 26px;
+            fill: #64b5f6;
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #e3f2fd;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            color: #90a4ae;
+            font-size: 0.95rem;
+            line-height: 1.8;
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid rgba(74, 158, 255, 0.2);
+            border-radius: 16px;
+            padding: 24px 28px;
+            margin: 20px 0;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 1.05rem;
+            color: #e6edf3;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .code-block::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #4a9eff, #1565c0);
+        }
+
+        .code-block .comment {
+            color: #8b949e;
+        }
+
+        .code-block .keyword {
+            color: #ff7b72;
+        }
+
+        .code-block .string {
+            color: #a5d6ff;
+        }
+
+        /* Tree Diagrams */
+        .tree-container {
+            background: linear-gradient(145deg, rgba(20, 25, 50, 0.8), rgba(15, 20, 40, 0.9));
+            border: 1px solid rgba(74, 158, 255, 0.15);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 30px 0;
+            overflow-x: auto;
+        }
+
+        .tree-diagram {
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 1.1rem;
+            line-height: 2.2;
+            color: #e0e6ed;
+            white-space: pre;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .tree-diagram .forest { color: #81c784; font-weight: 700; }
+        .tree-diagram .domain { color: #64b5f6; font-weight: 700; }
+        .tree-diagram .child { color: #ffb74d; }
+        .tree-diagram .resource { color: #ce93d8; }
+        .tree-diagram .dc { color: #ef5350; font-weight: 700; }
+        .tree-diagram .line { color: #546e7a; }
+
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(135deg, rgba(21, 101, 192, 0.1), rgba(13, 71, 161, 0.15));
+            border: 1px solid rgba(74, 158, 255, 0.25);
+            border-radius: 16px;
+            padding: 24px 30px;
+            margin: 24px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 18px;
+        }
+
+        .info-box .info-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(74, 158, 255, 0.15);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .info-box .info-icon svg {
+            width: 22px;
+            height: 22px;
+            fill: #4a9eff;
+        }
+
+        .info-box h4 {
+            color: #90caf9;
+            font-size: 1.1rem;
+            margin-bottom: 6px;
+        }
+
+        .info-box p {
+            color: #b0bec5;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        /* Steps Timeline */
+        .steps-timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .steps-timeline::before {
+            content: '';
+            position: absolute;
+            right: 24px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, #1565c0, #42a5f5, #90caf9);
+            border-radius: 3px;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 24px;
+            margin-bottom: 28px;
+            position: relative;
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #1565c0, #0d47a1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(13, 71, 161, 0.4);
+            z-index: 1;
+        }
+
+        .step-content {
+            background: rgba(20, 25, 50, 0.6);
+            border: 1px solid rgba(74, 158, 255, 0.15);
+            border-radius: 16px;
+            padding: 20px 26px;
+            flex: 1;
+        }
+
+        .step-content h4 {
+            color: #e3f2fd;
+            font-size: 1.15rem;
+            margin-bottom: 6px;
+        }
+
+        .step-content p {
+            color: #90a4ae;
+            font-size: 0.9rem;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, #1565c0, #0d47a1);
+            color: white;
+            padding: 18px 24px;
+            text-align: right;
+            font-weight: 700;
+            font-size: 1.05rem;
+        }
+
+        .comparison-table td {
+            padding: 18px 24px;
+            border-bottom: 1px solid rgba(74, 158, 255, 0.1);
+            background: rgba(20, 25, 50, 0.5);
+        }
+
+        .comparison-table tr:nth-child(even) td {
+            background: rgba(20, 25, 50, 0.7);
+        }
+
+        .comparison-table .highlight {
+            color: #64b5f6;
+            font-weight: 700;
+        }
+
+        /* PDC/ADC Cards */
+        .dc-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin: 30px 0;
+        }
+
+        .dc-card {
+            background: linear-gradient(145deg, rgba(20, 25, 50, 0.9), rgba(15, 20, 40, 0.95));
+            border: 1px solid rgba(74, 158, 255, 0.15);
+            border-radius: 20px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dc-card.pdc {
+            border-color: rgba(76, 175, 80, 0.3);
+        }
+
+        .dc-card.pdc::before {
+            background: linear-gradient(90deg, #4caf50, #81c784);
+        }
+
+        .dc-card.adc {
+            border-color: rgba(255, 152, 0, 0.3);
+        }
+
+        .dc-card.adc::before {
+            background: linear-gradient(90deg, #ff9800, #ffb74d);
+        }
+
+        .dc-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .dc-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 12px;
+        }
+
+        .dc-card.pdc h3 { color: #81c784; }
+        .dc-card.adc h3 { color: #ffb74d; }
+
+        .dc-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .dc-card ul li {
+            padding: 8px 0;
+            color: #b0bec5;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dc-card ul li::before {
+            content: '✓';
+            color: #4caf50;
+            font-weight: 700;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .slide { padding: 40px 20px; }
+            .title-slide h1 { font-size: 2.5rem; }
+            .dc-cards { grid-template-columns: 1fr; }
+            .nav-dots { display: none; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0e27; }
+        ::-webkit-scrollbar-thumb { background: #1565c0; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #1976d2; }
+
+        /* Animation for slide elements */
+        .slide.visible .card,
+        .slide.visible .step-item,
+        .slide.visible .info-box,
+        .slide.visible .tree-container,
+        .slide.visible .dc-card {
+            animation: fadeInUp 0.6s ease forwards;
+            opacity: 0;
+        }
+
+        .slide.visible .card:nth-child(1) { animation-delay: 0.1s; }
+        .slide.visible .card:nth-child(2) { animation-delay: 0.2s; }
+        .slide.visible .card:nth-child(3) { animation-delay: 0.3s; }
+        .slide.visible .card:nth-child(4) { animation-delay: 0.4s; }
+        .slide.visible .step-item:nth-child(1) { animation-delay: 0.1s; }
+        .slide.visible .step-item:nth-child(2) { animation-delay: 0.2s; }
+        .slide.visible .step-item:nth-child(3) { animation-delay: 0.3s; }
+        .slide.visible .step-item:nth-child(4) { animation-delay: 0.4s; }
+        .slide.visible .step-item:nth-child(5) { animation-delay: 0.5s; }
+        .slide.visible .step-item:nth-child(6) { animation-delay: 0.6s; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particles-canvas"></canvas>
+
+    <!-- Navigation Dots -->
+    <div class="nav-dots">
+        <div class="nav-dot active" data-slide="0">
+            <span class="tooltip">الصفحة الرئيسية</span>
+        </div>
+        <div class="nav-dot" data-slide="1">
+            <span class="tooltip">Domain & Domain Controller</span>
+        </div>
+        <div class="nav-dot" data-slide="2">
+            <span class="tooltip">Forest & Forest Root Domain</span>
+        </div>
+        <div class="nav-dot" data-slide="3">
+            <span class="tooltip">Parent Domain & Child Domain</span>
+        </div>
+        <div class="nav-dot" data-slide="4">
+            <span class="tooltip">PDC & ADC</span>
+        </div>
+        <div class="nav-dot" data-slide="5">
+            <span class="tooltip">خطوات الإنشاء</span>
+        </div>
+    </div>
+
+    <div class="slides-container">
+        <!-- Slide 1: Title -->
+        <div class="slide visible" id="slide-0">
+            <div class="slide-content title-slide">
+                <div class="icon-wrapper">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                </div>
+                <h1>Active Directory</h1>
+                <p class="subtitle">Domain · Forest · Domain Controller</p>
+                <div class="badge">دليل شامل لمفاهيم Active Directory</div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Domain & Domain Controller -->
+        <div class="slide" id="slide-1">
+            <div class="slide-content">
+                <div class="section-header">
+                    <div class="section-number">01</div>
+                    <h2>Domain و Domain Controller</h2>
+                </div>
+
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        </div>
+                        <h3>Domain</h3>
+                        <p>كيان منطقي (Logical Entity) يجمع المستخدمين والأجهزة والموارد ضمن شبكة واحدة، وتتم إدارته مركزياً عبر Active Directory.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24"><path d="M20 13H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1zM7 19H5v-4h2v4zM20 3H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1zM7 9H5V5h2v4z"/></svg>
+                        </div>
+                        <h3>Domain Controller</h3>
+                        <p>جهاز فعلي (Physical Entity) — Windows Server مُثبت عليه دور Active Directory Domain Services (AD DS) ومُرقّى ليصبح Domain Controller.</p>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                    </div>
+                    <div>
+                        <h4>مثال على اسم Domain</h4>
+                        <p>test.local هو اسم Domain يُستخدم عادةً في بيئات الاختبار والتطوير.</p>
+                    </div>
+                </div>
+
+                <div class="code-block">
+Active Directory Domain Services (AD DS)
+    ↓
+Promote this server to a Domain Controller
+    ↓
+Domain Name: test.local
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Forest -->
+        <div class="slide" id="slide-2">
+            <div class="slide-content">
+                <div class="section-header">
+                    <div class="section-number">02</div>
+                    <h2>Forest و Forest Root Domain</h2>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-icon">
+                        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                    </div>
+                    <div>
+                        <h4>ما هو Forest؟</h4>
+                        <p>الـ Forest هو أعلى مستوى في Active Directory، ويحتوي على Domain واحد أو أكثر. أول Domain يتم إنشاؤه داخل Forest يسمى <strong>Forest Root Domain</strong>.</p>
+                    </div>
+                </div>
+
+                <div class="tree-container">
+                    <div class="tree-diagram">
+<span class="forest">┌─────────────────────────────────────────┐</span>
+<span class="forest">│              Forest                     │</span>
+<span class="forest">│                                         │</span>
+<span class="forest">│           test.local                    │</span>
+<span class="forest">│      (Forest Root Domain)             │</span>
+<span class="forest">│                                         │</span>
+<span class="forest">│    ┌──────────┼──────────┐              │</span>
+<span class="forest">│    │          │          │              │</span>
+<span class="forest">│  Riyadh    Dammam     Macca             │</span>
+<span class="forest">│  ┌───┐      ┌──┐       ┌──┐             │</span>
+<span class="forest">│  A   B      C  D       E  F             │</span>
+<span class="forest">│ A1  B1                                  │</span>
+<span class="forest">└─────────────────────────────────────────┘</span>
+                    </div>
+                </div>
+
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                        </div>
+                        <h3>Forest Root Domain</h3>
+                        <p>أول Domain يتم إنشاؤه داخل Forest. في مثالنا: <strong>test.local</strong> هو Forest Root Domain.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                        </div>
+                        <h3>العلاقة الهرمية</h3>
+                        <p>Forest ← Forest Root Domain ← Child Domains ← Resources</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Parent & Child -->
+        <div class="slide" id="slide-3">
+            <div class="slide-content">
+                <div class="section-header">
+                    <div class="section-number">03</div>
+                    <h2>Parent Domain و Child Domain</h2>
+                </div>
+
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        </div>
+                        <h3>Parent Domain</h3>
+                        <p>الدومين الرئيسي الذي يحتوي على الدومينات الفرعية. في مثالنا: <strong>test.local</strong> هو Parent Domain.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                        </div>
+                        <h3>Child Domain</h3>
+                        <p>دومين فرعي يتبع الـ Parent Domain. يمكن أن يحتوي على فروع أخرى.</p>
+                    </div>
+                </div>
+
+                <div class="tree-container">
+                    <div class="tree-diagram">
+<span class="domain">test.local</span>
+<span class="line">│</span>
+<span class="line">├── </span><span class="child">riyadh.test.local</span>
+<span class="line">│      ├── </span><span class="resource">A</span>
+<span class="line">│      └── </span><span class="resource">B</span>
+<span class="line">│</span>
+<span class="line">├── </span><span class="child">dammam.test.local</span>
+<span class="line">│      ├── </span><span class="resource">C</span>
+<span class="line">│      └── </span><span class="resource">D</span>
+<span class="line">│</span>
+<span class="line">└── </span><span class="child">macca.test.local</span>
+<span class="line">       ├── </span><span class="resource">E</span>
+<span class="line">       └── </span><span class="resource">F</span>
+                    </div>
+                </div>
+
+                <div class="code-block">
+Child Domains:
+<span class="string">riyadh.test.local</span>
+<span class="string">dammam.test.local</span>
+<span class="string">macca.test.local</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: PDC & ADC -->
+        <div class="slide" id="slide-4">
+            <div class="slide-content">
+                <div class="section-header">
+                    <div class="section-number">04</div>
+                    <h2>PDC و ADC</h2>
+                </div>
+
+                <div class="dc-cards">
+                    <div class="dc-card pdc">
+                        <h3>🔵 PDC — Primary Domain Controller</h3>
+                        <p style="color:#b0bec5; margin-bottom:16px;">أول Domain Controller يتم إنشاؤه في الدومين</p>
+                        <ul>
+                            <li>يحمل نسخة كاملة من قاعدة بيانات Active Directory</li>
+                            <li>هو المصدر الرئيسي للمزامنة</li>
+                            <li>يدير العمليات الحرجة مثل FSMO Roles</li>
+                        </ul>
+                    </div>
+                    <div class="dc-card adc">
+                        <h3>🟠 ADC — Additional Domain Controller</h3>
+                        <p style="color:#b0bec5; margin-bottom:16px;">Domain Controller إضافي داخل نفس الدومين</p>
+                        <ul>
+                            <li>نسخة احتياطية من Active Directory</li>
+                            <li>توزيع حمل تسجيل الدخول</li>
+                            <li>زيادة الاعتمادية (High Availability)</li>
+                            <li>استمرار العمل عند تعطل PDC</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="tree-container">
+                    <div class="tree-diagram">
+<span class="domain">test.local</span>
+<span class="line">│</span>
+<span class="line">├── </span><span class="dc">PDC</span><span class="line">  ← Primary (الأول)</span>
+<span class="line">├── </span><span class="dc">ADC1</span><span class="line"> ← Additional</span>
+<span class="line">├── </span><span class="dc">ADC2</span><span class="line"> ← Additional</span>
+<span class="line">└── </span><span class="dc">ADC3</span><span class="line"> ← Additional</span>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    </div>
+                    <div>
+                        <h4>مزامنة تلقائية</h4>
+                        <p>جميع Domain Controllers تعمل معاً وتقوم بمزامنة بيانات Active Directory تلقائياً عبر replication.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Steps -->
+        <div class="slide" id="slide-5">
+            <div class="slide-content">
+                <div class="section-header">
+                    <div class="section-number">05</div>
+                    <h2>خطوات إنشاء الدومين</h2>
+                </div>
+
+                <div class="steps-timeline">
+                    <div class="step-item">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>تثبيت Windows Server</h4>
+                            <p>تثبيت نظام Windows Server على الجهاز المخصص ليكون Domain Controller.</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>تثبيت دور AD DS</h4>
+                            <p>تثبيت دور Active Directory Domain Services (AD DS) عبر Server Manager.</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>ترقية الخادم إلى Domain Controller</h4>
+                            <p>تنفيذ Promote this server to a Domain Controller لبدء عملية الإعداد.</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>إنشاء Forest Root Domain</h4>
+                            <p>إنشاء Forest جديد وتحديد اسم الدومين مثل: test.local</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <h4>إضافة Additional Domain Controllers</h4>
+                            <p>إنشاء ADCs عند الحاجة لتوزيع الحمل وزيادة الاعتمادية.</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">6</div>
+                        <div class="step-content">
+                            <h4>ضم الأجهزة إلى الدومين</h4>
+                            <p>Join Domain — ضم أجهزة المستخدمين والخوادم إلى الدومين للإدارة المركزية.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Particle Background
+        const canvas = document.getElementById('particles-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let mouseX = 0, mouseY = 0;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.radius = Math.random() * 2 + 1;
+                this.opacity = Math.random() * 0.5 + 0.2;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(74, 158, 255, ${this.opacity})`;
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < 60; i++) particles.push(new Particle());
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            // Draw connections
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 150) {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(74, 158, 255, ${0.1 * (1 - dist / 150)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // Scroll-based slide visibility
+        const slides = document.querySelectorAll('.slide');
+        const navDots = document.querySelectorAll('.nav-dot');
+
+        function updateSlides() {
+            const scrollY = window.scrollY;
+            const windowHeight = window.innerHeight;
+            let activeIndex = 0;
+
+            slides.forEach((slide, index) => {
+                const rect = slide.getBoundingClientRect();
+                const slideCenter = rect.top + rect.height / 2;
+
+                if (slideCenter < windowHeight * 0.7) {
+                    activeIndex = index;
+                }
+
+                if (rect.top < windowHeight * 0.8) {
+                    slide.classList.add('visible');
+                }
+            });
+
+            navDots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === activeIndex);
+            });
+        }
+
+        window.addEventListener('scroll', updateSlides);
+        updateSlides();
+
+        // Click navigation
+        navDots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                const slideIndex = parseInt(dot.dataset.slide);
+                slides[slideIndex].scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+    </script>
+</body>
+</html>
